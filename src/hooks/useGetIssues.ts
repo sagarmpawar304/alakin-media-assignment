@@ -2,23 +2,25 @@ import { Issue } from './../types/issueTypes';
 import { useState, useEffect } from 'react';
 import { Octokit } from '@octokit/core';
 
-const octokit = new Octokit({ auth: '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' });
-const perPage = 20;
+const octokit = new Octokit();
+const perPage = 40;
 
 const useGetIssues = () => {
     const [issuesState, setIssuesState] = useState<Issue[] | undefined>(undefined);
     const [currentIssues, setCurrentIssues] = useState<Issue[]>([]);
-    const [pageNumber, setPageNumber] = useState(0);
+    const [pageNumber, setPageNumber] = useState(1);
     const [numOfPages, setNumOfPages] = useState(0);
 
     const increamentPageNumber = () => {
-        console.log({ numOfPages, pageNumber });
-
         setPageNumber((state) => Math.min(state + 1, numOfPages));
     };
 
     const decreamentPageNumber = () => {
-        setPageNumber((state) => Math.max(state - 1, 0));
+        setPageNumber((state) => Math.max(state - 1, 1));
+    };
+
+    const setPage = (page: number) => {
+        setPageNumber(page);
     };
 
     useEffect(() => {
@@ -71,20 +73,27 @@ const useGetIssues = () => {
         const length = currentIssues.length;
         if (length) {
             setNumOfPages(Math.floor(length / perPage));
-            const start = pageNumber === 0 ? 0 : pageNumber * perPage + 1;
-            const end = pageNumber === 0 ? 1 * perPage : (pageNumber + 1) * perPage + 1;
+            const start = pageNumber === 1 ? 0 : (pageNumber - 1) * perPage;
+            const end = pageNumber === 1 ? 1 * perPage : pageNumber * perPage + 1;
 
             if (!pageNumber || !issuesState) {
                 setIssuesState(currentIssues.slice(start, end));
             }
-            if ((pageNumber + 1) * perPage > 0) {
+            if (pageNumber * perPage >= perPage) {
                 setIssuesState(currentIssues.slice(start, end));
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentIssues, pageNumber]);
 
-    return { issuesState, numOfPages, increamentPageNumber, decreamentPageNumber };
+    return {
+        issuesState,
+        numOfPages,
+        increamentPageNumber,
+        decreamentPageNumber,
+        setPage,
+        pageNumber,
+    };
 };
 
 export default useGetIssues;
